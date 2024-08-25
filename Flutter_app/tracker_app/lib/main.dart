@@ -55,13 +55,24 @@ class MyAppState extends ChangeNotifier {
 
   Future<void> searchProduct(String prodname) async {
     products.clear();
+
+    var trimmed = prodname.trim();
+
     try{
-      var result = await sqlConn.execute("SELECT * FROM foodbasics WHERE LOCATE('$prodname', name)>0");
-      for(var element in result.rows){
+      var fbResult = await sqlConn.execute("SELECT * FROM foodbasics WHERE LOCATE('$trimmed', name)>0");
+      for(var element in fbResult.rows){
         Map data = element.assoc();
         data['store'] = 'FoodBasics';
         products.add(data);
       }
+
+      var nfResult = await sqlConn.execute("SELECT * FROM nofrills WHERE LOCATE('$trimmed', name)>0");
+      for(var element in nfResult.rows){
+        Map data = element.assoc();
+        data['store'] = 'No Frills 🍁';
+        products.add(data);
+      }
+
       notifyListeners();
     }catch(e){
       print(e);
@@ -91,7 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try{
 
       final conn = await MySQLConnection.createConnection(
-      host: '10.0.2.2', 
+      host: '192.168.2.38', 
       port: 3306, 
       userName: 'android', 
       password: 'Iamdroid123',
@@ -145,6 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       icon: Icon(Icons.home),
                       label: Text('Home'),
                     ),
+                    
                     NavigationRailDestination(
                       icon: Icon(Icons.favorite),
                       label: Text('Favorites'),
@@ -152,9 +164,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (value) {
-                    setState((){
+                    /*setState((){
                       selectedIndex = value;
-                    });
+                    });*/ 
                   },
                 ),
               ),
@@ -203,6 +215,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 40,),
           SizedBox(
             width: 250,
             child: TextField(
@@ -238,14 +251,29 @@ class _GeneratorPageState extends State<GeneratorPage> {
 
 //Card Widget
 Card buildCard(Map<dynamic, dynamic>  product) {
-   var heading = product['price'];
-   var subheading = 'was ${product['price_before']}';
-   var cardImage = NetworkImage(
-       product['product_image']);
-   var supportingText =
-       product['name'];
-    var store = product['store'];
-    var productLink = product['product_link'];
+  var storeColors = {
+    'FoodBasics':{
+      'background': Colors.lightGreen,
+      'color': Colors.yellow
+    },
+    'No Frills':{
+      'background': Colors.yellow,
+      'color': Colors.black
+    }
+  };
+
+
+
+  var heading = r"$" + (product['price']?.toString() ?? 'Not Found');
+  var subheading = r'was $'+ (product['price_before']?.toString() ?? 'Not Found');
+
+  var cardImage = NetworkImage(
+      product['product_image']);
+  var supportingText =
+      product['name'];
+  var store = product['store'];
+  var productLink = product['product_link'];
+
    return Card(
     elevation: 4.0,
     child: Column(
@@ -264,9 +292,9 @@ Card buildCard(Map<dynamic, dynamic>  product) {
             ),
             Container(
               padding: EdgeInsets.all(10),
-              color: Colors.lightGreen,
+              color: storeColors[store]?['background'],
               width: 100,
-              child: Text(store, style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),),
+              child: Text(store, style: TextStyle(color: storeColors[store]?['color'], fontWeight: FontWeight.bold),),
             )
           ],
         ),

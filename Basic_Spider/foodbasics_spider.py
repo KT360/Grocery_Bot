@@ -1,6 +1,8 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 
+#TODO: The program throws an error at the end of the craw because next link is null
+#Added a check, stil doesn't work. Scrapy is asynchronous. Need to find a way to make it check next_link before
 
 '''
 passwords
@@ -12,8 +14,35 @@ bot:Iambot123
 clicked = []
 next_link = ""
 
+
+def safe_float_cast(value):
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+def safe_int_cast(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+
+#check function to prevent the program from simply crashing if a null value is provided
+def safe_value_check(value, arr_index=None):
+    
+    if arr_index:
+        if len(value) > 0:
+            return value[arr_index]
+    else:
+        if value:
+            return value
+        else:
+            return None
+        
+
 #Delete current file contenets
-open('Basic_Spider/deals.jsonl', 'w').close()
+open('Basic_Spider/foodbasics_deals.jsonl', 'w').close()
 
 class FlyerSpider(scrapy.Spider):
     name = "flyers"
@@ -27,14 +56,42 @@ class FlyerSpider(scrapy.Spider):
 
         #Get info for each product tile
         for product in response.css("div.default-product-tile"):
+            #name
+            name = safe_value_check(product.css("div.head__title::text").get())
+            #price
+            price = safe_float_cast(safe_value_check(product.css("span.price-update::text").get().replace('$','')))
+            
+            #Price Before
+            price_before = None
+            temp = safe_value_check(product.css("div.pricing__before-price span::text").getall(),arr_index=1)
+            if temp:
+                price_before = safe_float_cast(temp.replace('$',''))
+
+
+            product_id = None            
+            temp = safe_value_check(product.css('::attr(data-product-code)').extract(), arr_index=0)
+            if temp:
+                product_id = safe_int_cast(temp[0])
+            
+            #Product_link
+            product_link = ""
+            temp = safe_value_check(product.css("a.product-details-link::attr(href)"), arr_index=0)
+            if temp:
+                product_link = "https://www.foodbasics.ca"+temp.get()
+
+            #GEt the firstt 'picture' tag, the grab the second set image link, that's the big one
+            product_image = ""
+            temp = safe_value_check(product.css("div.pt__visual picture.defaultable-picture source::attr(srcset)").getall(), arr_index=0)
+            if temp:
+                product_image = str(temp).split(' ')[1]
+
             yield {
-                "name": product.css("div.head__title::text").get(),
-                "price": product.css("span.price-update::text").get(),
-                #A bit hacky but some products just don't have a pricing before
-                "price_before": product.css("div.pricing__before-price span::text").getall()[1] if len(product.css("div.pricing__before-price span::text").getall())>0 else "",
-                "product_id": int(product.css('::attr(data-product-code)').extract()[0]),
-                "product_link": "https://www.foodbasics.ca"+product.css("a.product-details-link::attr(href)").extract()[0],
-                "product_image": product.css("div.pt__visual picture.defaultable-picture img::attr(src)").get()
+                "name": name,
+                "price": price,
+                "price_before": price_before,
+                "product_id": product_id,
+                "product_link": product_link,
+                "product_image": product_image
             }
 
         #For each pagination linkn, check if page has already been clicked, and make sure the link only contains 'ppn--element' as it's class
@@ -49,17 +106,16 @@ class FlyerSpider(scrapy.Spider):
                     print("NEXT LINK: "+ next_link)
                     clicked.append(page_number)
                     break
+        
         if next_link:
             yield scrapy.Request(url="https://www.foodbasics.ca"+next_link, callback=self.parse)
 
 
-
-#Run the spider
-if __name__ == "__main__":
+def beginCrawl():
     process = CrawlerProcess({
         'USER-AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
         'FEED_FORMAT': 'jsonl',
-        'FEED_URI': 'Basic_Spider/deals.jsonl',
+        'FEED_URI': 'Basic_Spider/foodbasics_deals.jsonl',
         'DOWNLOAD_DELAY': 30
     })
 
