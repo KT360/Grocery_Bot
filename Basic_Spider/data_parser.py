@@ -1,8 +1,15 @@
-import mysql.connector
+import psycopg2
 import json
+import os
+
+
+user = os.environ.get('USER_NAME')
+password = os.environ.get('PASSWORD')
+hostname = os.environ.get('HOST_NAME')
+
 
 #Connect to database
-cnx = mysql.connector.connect(user='bot', password='Iambot123', host='127.0.0.1', database='Deals')
+cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h', port=5432)
 cursor = cnx.cursor()
 
 def parseScrapedData():
