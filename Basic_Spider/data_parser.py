@@ -10,7 +10,7 @@ def parseScrapedData():
     data = []
 
     #Get FOODBASICS Data
-    with open('Basic_Spider/foodbasics_deals.jsonl') as data_file:
+    with open('foodbasics_deals.jsonl') as data_file:
         #convert each line to json object
         for line in data_file:
             data.append(json.loads(line))
@@ -33,7 +33,7 @@ def parseScrapedData():
 
     data.clear()
     #Get NOFRILLS Data
-    with open('Basic_Spider/nofrills_deals.jsonl') as data_file:
+    with open('nofrills_deals.jsonl') as data_file:
         #convert each line to json object
         for line in data_file:
             data.append(json.loads(line))

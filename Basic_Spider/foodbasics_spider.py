@@ -42,7 +42,7 @@ def safe_value_check(value, arr_index=None):
         
 
 #Delete current file contenets
-open('Basic_Spider/foodbasics_deals.jsonl', 'w').close()
+open('foodbasics_deals.jsonl', 'w').close()
 
 class FlyerSpider(scrapy.Spider):
     name = "flyers"
@@ -115,7 +115,7 @@ def beginCrawl():
     process = CrawlerProcess({
         'USER-AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
         'FEED_FORMAT': 'jsonl',
-        'FEED_URI': 'Basic_Spider/foodbasics_deals.jsonl',
+        'FEED_URI': 'foodbasics_deals.jsonl',
         'DOWNLOAD_DELAY': 30
     })
 

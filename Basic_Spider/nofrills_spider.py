@@ -49,7 +49,7 @@ def beginCrawl():
     print('nf_spider STARTING REQUESTS')
 
     #Truncate content in current file if present
-    open('Basic_Spider/nofrills_deals.jsonl', 'w').close()
+    open('nofrills_deals.jsonl', 'w').close()
 
     for i in range(1,21):
 
@@ -60,7 +60,7 @@ def beginCrawl():
         if response.status_code == 200:
             product_list = response.json()['results']
 
-            with open('Basic_Spider/nofrills_deals.jsonl', 'a') as f:
+            with open('nofrills_deals.jsonl', 'a') as f:
                 for product in product_list:
                     data = {"product_id": int(product['articleNumber']), 
                             "name":product['name'], 
