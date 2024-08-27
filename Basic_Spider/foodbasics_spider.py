@@ -117,6 +117,7 @@ def beginCrawl():
         'FEED_FORMAT': 'jsonl',
         'FEED_URI': 'foodbasics_deals.jsonl',
         'RETRY_HTTP_CODES': [500, 502, 503, 504, 522, 524, 408, 429, 403],
+        'RETRY_TIMES': 4,
         'DOWNLOAD_DELAY': 30
     })
 
