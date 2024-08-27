@@ -47,7 +47,7 @@ class FlyerSpider(scrapy.Spider):
     #NOTE MAKE PROXY AN ENVIRONEMENT VARIABLE LATER IF WORKS
     def start_requests(self):
         request = scrapy.Request(url="https://www.foodbasics.ca/search?sortOrder=relevance&filter=%3Arelevance%3Adeal%3AFLYER_DEAL", callback=self.parse)
-        request.meta['proxy'] = "http://brd-customer-hl_47a7b1c8-zone-residential_proxy1:10gaf9vj34tc@brd.superproxy.io:22225"
+        request.meta['proxies'] = {"http":"http://wl605c9imiopiy3:zvkqohsjntt7yvr@rp.proxyscrape.com:6060"}
         yield request
     
     def parse(self, response):
