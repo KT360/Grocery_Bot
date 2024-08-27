@@ -121,6 +121,3 @@ def beginCrawl():
 
     process.crawl(FlyerSpider)
     process.start()
-
-
-beginCrawl()
