@@ -1,3 +1,4 @@
+from typing import Iterable
 import scrapy
 from scrapy.crawler import CrawlerProcess
 
@@ -40,9 +41,11 @@ open('foodbasics_deals.jsonl', 'w').close()
 
 class FlyerSpider(scrapy.Spider):
     name = "flyers"
-    start_urls = [
-        "https://www.foodbasics.ca/search?sortOrder=relevance&filter=%3Arelevance%3Adeal%3AFLYER_DEAL",
-    ]
+
+    def start_requests(self):
+        request = scrapy.Request(url="https://www.foodbasics.ca/search?sortOrder=relevance&filter=%3Arelevance%3Adeal%3AFLYER_DEAL", callback=self.parse)
+        request.meta['proxy'] = "http://brd-customer-hl_47a7b1c8-zone-residential_proxy1:10gaf9vj34tc@brd.superproxy.io:22225"
+        yield request
 
     def parse(self, response):
         #Set first page as clicked
