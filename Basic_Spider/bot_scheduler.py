@@ -13,8 +13,11 @@ def collectData():
 #Every 30mins
 #schedule.every(30).minutes.do(collectData)
 
-#Every day
-schedule.every().day.at('10:30').do(collectData)
+#every hour
+schedule.every().hour.do(collectData)
+
+#Every day 10:30 is like 6:30
+#schedule.every().day.at('10:30').do(collectData)
 
 while True:
     schedule.run_pending()

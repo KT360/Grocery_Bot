@@ -24,10 +24,12 @@ class MyApp extends StatelessWidget {
         title: 'Tracker App',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 34, 255, 152)),
+          colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 164, 217, 238)),
         ),
         home: MyHomePage(),
+      
       ),
+      
     );
   }
 }
@@ -146,6 +148,9 @@ class _MyHomePageState extends State<MyHomePage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Scaffold(
+          appBar: AppBar(
+            title: Text('Grocery Tracker'),
+          ),
           body: Row(
             children: [
               SafeArea(
@@ -158,7 +163,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     
                     NavigationRailDestination(
-                      icon: Icon(Icons.favorite),
+                      icon: Icon(Icons.menu),
                       label: Text('Favorites'),
                     ),
                   ],
@@ -211,40 +216,40 @@ class _GeneratorPageState extends State<GeneratorPage> {
 
     
     
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: 40,),
-          SizedBox(
-            width: 250,
-            child: TextField(
-              controller: myController,
-              obscureText: false,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Search Product',
-              )
-            ),
-          ),
-          SizedBox(height: 10),
-          Expanded(
-          child: ListView.separated(
-            itemCount: productList.length,
-            separatorBuilder: (BuildContext context, int index) => const Divider(),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ListView.builder(
+            itemCount: productList.length+1, //Increment count of items since we are adding sizebox first
+            //separatorBuilder: (BuildContext context, int index) => const Divider(),
             itemBuilder: (BuildContext context, int index){
-              return buildCard(productList[index]);
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              appState.searchProduct(myController.text);
+              if(index == 0){
+                //Return empy sizbox for margin from top
+                return SizedBox(height:80);
+              }
+              return buildCard(productList[index - 1]); //Adjust index
             },
-            child: Text('Search'),
-          ),
-        ],
-      ),
+          )
+        ),
+        Positioned(
+          top:15,
+          left:20,
+          right:20,
+          child: SizedBox(
+                child: TextField(
+                  controller: myController,
+                  obscureText: false,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Search Product',
+                    fillColor: Colors.white,
+                    filled: true
+                  ),
+                  onSubmitted: (value) => {appState.searchProduct(value)},
+                ),
+              ),
+        )
+      ]
     );
   }
 }
