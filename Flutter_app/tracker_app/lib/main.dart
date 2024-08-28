@@ -2,7 +2,7 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:mysql_client/mysql_client.dart';
+import 'package:postgres/postgres.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:fluttertoast/fluttertoast.dart';
@@ -38,8 +38,9 @@ class MyAppState extends ChangeNotifier {
   //Products
   List<Map<dynamic,dynamic>> products = [];
   //Create connection as late, will given a value in main page init
-  late MySQLConnection sqlConn;
+  late Connection sqlConn;
 
+  /*
   //Get all products
   Future<void> getAllProducts() async {
     products.clear();
@@ -53,26 +54,46 @@ class MyAppState extends ChangeNotifier {
     }catch(e){
       print(e);
     }
-  }
-
+  }*/
+  //Fields are: name, product_id, price, price_before, product_image, product_link
   Future<void> searchProduct(String prodname) async {
     products.clear();
 
     var trimmed = prodname.trim();
 
     try{
-      var fbResult = await sqlConn.execute("SELECT * FROM foodbasics WHERE LOCATE('$trimmed', name)>0");
-      for(var element in fbResult.rows){
-        Map data = element.assoc();
-        data['store'] = 'FoodBasics';
-        products.add(data);
+      //FOOD BASICS
+      var fbResult = await sqlConn.execute("SELECT * FROM foodbasics WHERE POSITION(LOWER('$trimmed') IN LOWER(name))>0");
+      var fbFormatted = fbResult.map((row) {
+        return {
+          'name':row[0],
+          'price':row[1],
+          'price_before':row[2],
+          'product_link':row[3],
+          'product_image':row[4],
+          'product_id':row[5],
+          'store':'FoodBasics'
+        };
+      });
+      for (var element in fbFormatted){
+        products.add(element);
       }
 
-      var nfResult = await sqlConn.execute("SELECT * FROM nofrills WHERE LOCATE('$trimmed', name)>0");
-      for(var element in nfResult.rows){
-        Map data = element.assoc();
-        data['store'] = 'No Frills 🍁';
-        products.add(data);
+      //NO FRILLS
+      var nfResult = await sqlConn.execute("SELECT * FROM nofrills WHERE POSITION(LOWER('$trimmed') IN LOWER(name))>0");
+      var nfFormatted = nfResult.map((row) {
+        return {
+          'name':row[0],
+          'price':row[1],
+          'price_before':row[2],
+          'product_link':row[3],
+          'product_image':row[4],
+          'product_id':row[5],
+          'store':'No Frills 🍁'
+        };
+      });
+      for (var element in nfFormatted){
+        products.add(element);
       }
 
       notifyListeners();
@@ -103,15 +124,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
     try{
 
-      final conn = await MySQLConnection.createConnection(
-      host: '192.168.2.38', 
-      port: 3306, 
-      userName: 'android', 
-      password: 'Iamdroid123',
-      databaseName: 'Deals'
-      );
-
-      await conn.connect();
+      final conn = await Connection.open(Endpoint(
+      host: 'dpg-cr5q4qbtq21c73b5uufg-a.oregon-postgres.render.com', 
+      port: 5432, 
+      username: 'bot_user', 
+      password: 'UXfpmS4AjGdBOi45zv7gaZJ4ntsdVsKZ',
+      database: 'deals_uh8h'
+      ));
 
       //Set connection
       appState.sqlConn = conn;

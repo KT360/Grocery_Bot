@@ -1,6 +1,7 @@
 from typing import Iterable
 import scrapy
 from scrapy.crawler import CrawlerProcess
+import os
 
 #TODO: The program throws an error at the end of the craw because next link is null
 #Added a check, stil doesn't work. Scrapy is asynchronous. Need to find a way to make it check next_link before
@@ -35,6 +36,12 @@ def safe_value_check(value, arr_index=None):
         else:
             return None
         
+#Get proxy
+username = os.getenv('PROXY_NAME')
+password = os.getenv('PROXY_PASSWORD')
+host = os.getenv('PROXY_HOST')
+
+proxy = "http://{}:{}@{}:6060".format(username,password,host)
 
 #Delete current file contenets
 open('foodbasics_deals.jsonl', 'w').close()
@@ -42,12 +49,9 @@ open('foodbasics_deals.jsonl', 'w').close()
 class FlyerSpider(scrapy.Spider):
     name = "flyers"
 
-    #start_urls = ["https://www.foodbasics.ca/search?sortOrder=relevance&filter=%3Arelevance%3Adeal%3AFLYER_DEAL"]
-    
-    #NOTE MAKE PROXY AN ENVIRONEMENT VARIABLE LATER IF WORKS
     def start_requests(self):
         request = scrapy.Request(url="https://www.foodbasics.ca/search?sortOrder=relevance&filter=%3Arelevance%3Adeal%3AFLYER_DEAL", callback=self.parse)
-        request.meta['proxy'] = "http://wl605c9imiopiy3-country-ca:zvkqohsjntt7yvr@rp.proxyscrape.com:6060"
+        request.meta['proxy'] = proxy
         yield request
     
     def parse(self, response):
@@ -108,7 +112,7 @@ class FlyerSpider(scrapy.Spider):
                     break
         
         if next_link:
-            yield scrapy.Request(url="https://www.foodbasics.ca"+next_link, callback=self.parse)
+            yield scrapy.Request(url="https://www.foodbasics.ca"+next_link, meta={'proxy':proxy},callback=self.parse)
 
 
 def beginCrawl():
