@@ -6,10 +6,6 @@ import os
 #TODO: The program throws an error at the end of the craw because next link is null
 #Added a check, stil doesn't work. Scrapy is asynchronous. Need to find a way to make it check next_link before
 
-#keep track of clicked pages
-clicked = []
-next_link = ""
-
 
 def safe_float_cast(value):
     try:
@@ -49,6 +45,10 @@ open('foodbasics_deals.jsonl', 'w').close()
 class FlyerSpider(scrapy.Spider):
     name = "flyers"
 
+    #keep track of clicked pages
+    clicked = []
+    next_link = ""
+
     def start_requests(self):
         request = scrapy.Request(url="https://www.foodbasics.ca/search?sortOrder=relevance&filter=%3Arelevance%3Adeal%3AFLYER_DEAL", callback=self.parse)
         request.meta['proxy'] = proxy
@@ -56,7 +56,7 @@ class FlyerSpider(scrapy.Spider):
     
     def parse(self, response):
         #Set first page as clicked
-        clicked.append("1")
+        self.clicked.append("1")
 
         #Get info for each product tile
         for product in response.css("div.default-product-tile"):
@@ -106,13 +106,13 @@ class FlyerSpider(scrapy.Spider):
 
             if page_link.attrib.get('class') == 'ppn--element':
                 if page_number and not(page_number == "...") and  not(page_number in clicked):
-                    next_link = page_link.css("::attr(href)").extract()[0]
-                    print("NEXT LINK: "+ next_link)
-                    clicked.append(page_number)
+                    self.next_link = page_link.css("::attr(href)").extract()[0]
+                    print("NEXT LINK: "+ self.next_link)
+                    self.clicked.append(page_number)
                     break
         
-        if next_link:
-            yield scrapy.Request(url="https://www.foodbasics.ca"+next_link, meta={'proxy':proxy},callback=self.parse)
+        if self.next_link:
+            yield scrapy.Request(url="https://www.foodbasics.ca"+self.next_link, meta={'proxy':proxy},callback=self.parse)
 
 
 def beginCrawl():

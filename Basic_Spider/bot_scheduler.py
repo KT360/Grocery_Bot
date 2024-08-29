@@ -16,7 +16,7 @@ def run_data_parser():
     data_parser.parseScrapedData()
 
 def collectData():
-    #Create separate processes, since scrapy reactors cannot be auto restarted
+    #Create separate processes, since scrapy reactors cannot be auto restarted in the same process
     fb_process = Process(target=run_fb_spider)
     nf_process = Process(target=run_nf_spider)
     parser_process = Process(target=run_data_parser)

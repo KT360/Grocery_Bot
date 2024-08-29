@@ -8,11 +8,12 @@ password = os.environ.get('PASSWORD')
 hostname = os.environ.get('HOST_NAME')
 
 
-#Connect to database
-cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h', port=5432)
-cursor = cnx.cursor()
-
+#For each process (instance of the function call), need to create a new psql connection
 def parseScrapedData():
+
+    #Connect to database
+    cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h', port=5432)
+    cursor = cnx.cursor()
     #Add data
     data = []
 
