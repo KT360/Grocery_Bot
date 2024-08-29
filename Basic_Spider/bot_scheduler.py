@@ -36,7 +36,7 @@ def collectData():
 #schedule.every(30).minutes.do(collectData)
 
 #every hour
-schedule.every().hour.do(collectData)
+schedule.every(2).hour.do(collectData)
 
 #Every day 10:30 is like 6:30
 #schedule.every().day.at('10:30').do(collectData)
