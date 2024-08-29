@@ -1,5 +1,6 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
 import 'package:postgres/postgres.dart';
@@ -217,12 +218,131 @@ class GeneratorPage extends StatefulWidget {
 
 class _GeneratorPageState extends State<GeneratorPage> {
 
+  bool fbSelected = true;
+  bool nfSelected = false;
+
+  String? _priceFilter = r"Under 5$";
+
   final myController = TextEditingController();
 
   @override
   void dispose(){
     myController.dispose();
     super.dispose();
+  }
+
+  //Dialog box
+  Future<void>_dialogBuilder(BuildContext context){
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context){
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState){
+            return AlertDialog(
+              title: const Text('Product Filter'),
+              content:SizedBox(
+                height: 500,
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    
+                    SizedBox(
+                      width: 300,
+                      height: 100,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Expanded(
+                            child: CheckboxListTile(
+                                value: fbSelected, 
+                                onChanged: (bool? value){
+                                  setState(() {
+                                    fbSelected = value!;
+                                  });
+                                },
+                                title: const Text('Food Basics')
+                              ),
+                          ),
+                          Expanded(
+                            child: CheckboxListTile(
+                                value: nfSelected, 
+                                onChanged: (bool? value){
+                                  setState(() {
+                                    nfSelected = value!;
+                                  });
+                                },
+                                title: const Text('No Frills')
+                              ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 30,),
+                    SizedBox(
+                      height: 300,
+                      width: 300,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                              title: const Text(r'Under 5$'),
+                              leading: Radio<String>(
+                                value: r"Under 5$",
+                                groupValue: _priceFilter,
+                                onChanged: (String? value){
+                                  setState(() {
+                                    _priceFilter = value;
+                                  });
+                                },
+                              )
+                            ),
+                          ListTile(
+                              title: const Text(r'Under 10$'),
+                              leading: Radio<String>(
+                                value: r"Under 10$",
+                                groupValue: _priceFilter,
+                                onChanged: (String? value){
+                                  setState(() {
+                                    _priceFilter = value;
+                                  });
+                                },
+                              )
+                            ),
+                          ListTile(
+                              title: const Text(r'Under 15$'),
+                              leading: Radio<String>(
+                                value: r"Under 15$",
+                                groupValue: _priceFilter,
+                                onChanged: (String? value){
+                                  setState(() {
+                                    _priceFilter = value;
+                                  });
+                                },
+                              )
+                            ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge
+                  ),
+                  child: const Text('Apply'),
+                  onPressed: (){
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+        });
+
+      }
+    );
   }
 
   @override
@@ -267,6 +387,16 @@ class _GeneratorPageState extends State<GeneratorPage> {
                   onSubmitted: (value) => {appState.searchProduct(value)},
                 ),
               ),
+        ),
+        Positioned(
+          right: 25,
+          top: 625, //Dynamic positioning
+          child: ElevatedButton(
+              child: const Text('Filter'),
+              onPressed: (){
+                _dialogBuilder(context);
+              },
+            ),
         )
       ]
     );
@@ -285,8 +415,6 @@ Card buildCard(Map<dynamic, dynamic>  product) {
       'color': Colors.black
     }
   };
-
-
 
   var heading = r"$" + (product['price']?.toString() ?? 'Not Found');
   var subheading = r'was $'+ (product['price_before']?.toString() ?? 'Not Found');

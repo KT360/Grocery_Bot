@@ -1,6 +1,7 @@
 import requests
 import json
 import time
+import math
 
 url = "https://api.pcexpress.ca/pcx-bff/api/v1/products/deals"
 
@@ -11,7 +12,7 @@ payload = {
     "date": "21082024",
     "lang": "en",
     "offerType": "ALL",
-    "pagination": {"from": 1, "size": 48},
+    "pagination": {"from": 0, "size": 48},
     "pcId": None,
     "pickupType": "STORE",
     "storeId": "3152"
@@ -42,16 +43,46 @@ headers = {
 }
 "name, price, price_before, product_link, product_id, product_image"
 
+def scrapProducts(product_list):
+    with open('nofrills_deals.jsonl', 'a') as f:
+        for product in product_list:
+            data = {"product_id": int(product['articleNumber']), 
+                    "name":product['name'], 
+                    "price":float(product['prices']['price']['value']), 
+                    "price_before":float(product['prices']['wasPrice']['value']) if product['prices']['wasPrice'] else None,  #Sometimes there is not price before
+                    "product_link":'https://www.nofrills.ca/'+product['link'], 
+                    "product_image":product['imageAssets'][0]['mediumUrl']
+                    }
+            entry = json.dumps(data)+'\n'
+            f.write(entry)
+
 # Make the POST request
-# Let's just go through 20 pages, seems fine for now
 def beginCrawl():
+
+    #Default number of pages to go through
+    total_pages = 20
+    page_size = 48
 
     print('nf_spider STARTING REQUESTS')
 
     #Truncate content in current file if present
     open('nofrills_deals.jsonl', 'w').close()
 
-    for i in range(1,21):
+    #Send initial request to get first batch and total number of pages
+    response = requests.post(url, json=payload, headers=headers)
+    if response.status_code == 200:
+        json_response = response.json()
+        total_results = json_response['pagination']['totalResults']
+        total_pages = math.ceil(total_results/page_size)
+        product_list = json_response['results']
+        scrapProducts(product_list=product_list)
+
+
+    #Wait a couple of seconds
+    time.sleep(10)
+
+    #Go through rest of pages
+    for i in range(1,total_pages):
 
         payload['pagination']['from'] = i
 
@@ -59,18 +90,7 @@ def beginCrawl():
 
         if response.status_code == 200:
             product_list = response.json()['results']
-
-            with open('nofrills_deals.jsonl', 'a') as f:
-                for product in product_list:
-                    data = {"product_id": int(product['articleNumber']), 
-                            "name":product['name'], 
-                            "price":float(product['prices']['price']['value']), 
-                            "price_before":float(product['prices']['wasPrice']['value']) if product['prices']['wasPrice'] else None,  #Sometimes there is not price before
-                            "product_link":'https://www.nofrills.ca/'+product['link'], 
-                            "product_image":product['imageAssets'][0]['mediumUrl']
-                            }
-                    entry = json.dumps(data)+'\n'
-                    f.write(entry)
+            scrapProducts(product_list=product_list)
 
         print('nf_spider REQUEST #'+str(i)+' FINISHED.')
         #Send request every 30s
