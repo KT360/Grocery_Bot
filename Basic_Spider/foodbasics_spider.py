@@ -105,7 +105,7 @@ class FlyerSpider(scrapy.Spider):
             print("PAGE NUMBER: "+page_number)
 
             if page_link.attrib.get('class') == 'ppn--element':
-                if page_number and not(page_number == "...") and  not(page_number in clicked):
+                if page_number and not(page_number == "...") and  not(page_number in self.clicked):
                     self.next_link = page_link.css("::attr(href)").extract()[0]
                     print("NEXT LINK: "+ self.next_link)
                     self.clicked.append(page_number)
