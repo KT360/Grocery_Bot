@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -41,6 +43,15 @@ class MyAppState extends ChangeNotifier {
   //Create connection as late, will given a value in main page init
   late Connection sqlConn;
 
+  String lastSearch = "";
+
+  bool showLoading = false;
+
+  void setShowLoading(value){
+    showLoading = value;
+    notifyListeners();
+  }
+
   /*
   //Get all products
   Future<void> getAllProducts() async {
@@ -56,11 +67,91 @@ class MyAppState extends ChangeNotifier {
       print(e);
     }
   }*/
-  //Fields are: name, product_id, price, price_before, product_image, product_link
+
+  //Takes in a table name an returns the appropriate store name
+  String formatStoreName(tableName){
+    switch(tableName){
+      case 'foodbasics':
+        return 'FoodBasics';
+      case 'nofrills':
+        return 'No Frills 🍁';
+      default:
+      return 'No Name';
+    }
+  }
+
+  //Filter tables according to the last product searched
+  //All store tables should have the same columns and data types
+  Future<void> filteredSearch(String prodname, List<String>tables, double priceFilter) async {
+
+    //Clear products
+    products.clear();
+
+    var fullQuery = "";
+    List<String> queries = [];
+    var trimmed = prodname.trim();
+
+    //for each table given in the array, compose query where we select the rows where the product name is present and the price is either null or lower than specified
+    for(var store in tables){
+      var query = "SELECT $store.*, '$store' AS type FROM $store WHERE POSITION(LOWER('$trimmed') IN LOWER($store.name))>0 AND ($store.price < $priceFilter OR $store.price IS NULL)";
+      queries.add(query);
+    }
+
+    //Combine all the queries together, adding a 'UNION ALL' except at the end
+    for(var i=0; i<queries.length; i++){
+
+      if(i < queries.length - 1){
+        fullQuery = fullQuery + queries[i] + " UNION ALL ";
+      }else
+      {
+        fullQuery = fullQuery + queries[i];
+      }
+
+    }
+
+    try{
+
+      //Execute the query
+      var result = await sqlConn.execute(fullQuery);
+      //Populate products with the appropriate store names depending on type column (column #7)
+      var formattedMap = result.map((row){
+        return {
+          'name':row[0],
+          'price':row[1],
+          'price_before':row[2],
+          'product_link':row[3],
+          'product_image':row[4],
+          'product_id':row[5],
+          'store': formatStoreName(row[6])
+        };
+      });
+
+      //append all to products
+      for(var element in formattedMap){
+        products.add(element);
+      }
+      showLoading = false;
+
+      //Notify
+      notifyListeners();
+
+    }catch(e){
+
+      print(e);
+      Fluttertoast.showToast(msg: 'Connection Error: $e');
+      showLoading = false;
+      notifyListeners();
+      
+    }
+  }
+
+  //Search product in individual tables
   Future<void> searchProduct(String prodname) async {
     products.clear();
 
     var trimmed = prodname.trim();
+
+    lastSearch = prodname;
 
     try{
       //FOOD BASICS
@@ -97,11 +188,16 @@ class MyAppState extends ChangeNotifier {
         products.add(element);
       }
 
+      showLoading = false;
       notifyListeners();
+
     }catch(e){
       print(e);
+      showLoading = false;
+      notifyListeners();
     }
   }
+
 
 }
 
@@ -218,8 +314,13 @@ class GeneratorPage extends StatefulWidget {
 
 class _GeneratorPageState extends State<GeneratorPage> {
 
-  bool fbSelected = true;
-  bool nfSelected = false;
+  //List containing the stores/tables and their selected state
+  var storeSelection = [
+    {'table':'foodbasics', 'selected':true},
+    {'table':'nofrills', 'selected': false}
+  ];
+  //bool fbSelected = true;
+  //bool nfSelected = false;
 
   String? _priceFilter = r"Under 5$";
 
@@ -238,6 +339,10 @@ class _GeneratorPageState extends State<GeneratorPage> {
       builder: (BuildContext context){
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState){
+
+            //Get whole state object
+            var appState = Provider.of<MyAppState>(context);
+
             return AlertDialog(
               title: const Text('Product Filter'),
               content:SizedBox(
@@ -254,26 +359,20 @@ class _GeneratorPageState extends State<GeneratorPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Expanded(
-                            child: CheckboxListTile(
-                                value: fbSelected, 
-                                onChanged: (bool? value){
-                                  setState(() {
-                                    fbSelected = value!;
-                                  });
-                                },
-                                title: const Text('Food Basics')
-                              ),
-                          ),
-                          Expanded(
-                            child: CheckboxListTile(
-                                value: nfSelected, 
-                                onChanged: (bool? value){
-                                  setState(() {
-                                    nfSelected = value!;
-                                  });
-                                },
-                                title: const Text('No Frills')
-                              ),
+                            child: ListView.builder(
+                              itemCount: storeSelection.length,
+                              itemBuilder: (BuildContext context, int index){
+                                return CheckboxListTile(
+                                  value: storeSelection[index]['selected'] as bool, 
+                                  onChanged: (bool? value){
+                                    setState((){
+                                      storeSelection[index]['selected'] = value!;
+                                    });
+                                  },
+                                  title: Text(storeSelection[index]['table'] as String),
+                                );
+                              },
+                            ) 
                           ),
                         ],
                       ),
@@ -332,9 +431,46 @@ class _GeneratorPageState extends State<GeneratorPage> {
                   style: TextButton.styleFrom(
                     textStyle: Theme.of(context).textTheme.labelLarge
                   ),
-                  child: const Text('Apply'),
+                  child: const Text('Cancel'),
                   onPressed: (){
                     Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge
+                  ),
+                  child: const Text('Apply'),
+                  //Collect all selected table names, then pass it to search function as well as last search product
+                  onPressed: (){
+                    List<String> tableList = [];
+                    var price = 0.00;
+                    var count = 0;
+
+                    for (var store in storeSelection){
+                      if(store['selected'] as bool == true){
+                        tableList.add(store['table'] as String);
+                        count++;
+                      }
+                    }
+                    //Set the price limit depending on what was selected in the radio
+                    switch(_priceFilter){
+                      case r"Under 5$":
+                        price = 5.00;
+                      case r"Under 10$":
+                        price = 10.00;
+                      case r"Under 15$":
+                        price = 15.00;
+                      default:
+                        price = 15.00;
+                    }
+                    if(count > 0){
+                      appState.setShowLoading(true);
+                      appState.filteredSearch(appState.lastSearch, tableList,price);
+                      Navigator.of(context).pop();
+                    }else{
+                      Fluttertoast.showToast(msg: 'Please select atleast one store');
+                    }
                   },
                 )
               ],
@@ -384,7 +520,10 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     fillColor: Colors.white,
                     filled: true
                   ),
-                  onSubmitted: (value) => {appState.searchProduct(value)},
+                  onSubmitted: (value) => {
+                    appState.setShowLoading(true),
+                    appState.searchProduct(value)
+                  },
                 ),
               ),
         ),
@@ -392,12 +531,20 @@ class _GeneratorPageState extends State<GeneratorPage> {
           right: 25,
           top: 625, //Dynamic positioning
           child: ElevatedButton(
-              child: const Text('Filter'),
-              onPressed: (){
+              onPressed: appState.lastSearch == "" ? null : (){
                 _dialogBuilder(context);
               },
+              child: const Text('Filter')
             ),
-        )
+        ),
+        if(appState.showLoading)
+          Center(
+            child:LoadingAnimationWidget.staggeredDotsWave(
+              color: Color.fromARGB(255, 255, 255, 255),
+              size: 50
+            ), 
+          )
+          
       ]
     );
   }

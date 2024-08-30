@@ -12,6 +12,7 @@ dependencies:
   postgres: ^3.3.0
   http: ^1.2.0
   fluttertoast: ^8.2.8
+  loading_animation_widget:
   flutter:
     sdk: flutter
 

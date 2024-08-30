@@ -21,24 +21,29 @@ def collectData():
     nf_process = Process(target=run_nf_spider)
     parser_process = Process(target=run_data_parser)
 
+    print("STARTED FOODBASICS")
     fb_process.start()
     fb_process.join()
-
+    
+    print("STARTED NO FRILLS")
     nf_process.start()
     nf_process.join()
 
+    print("STARTED UPLOAD")
     #Start and finish parsing data
     parser_process.start()
     parser_process.join()
+
+    print("FINISHED SCRAPING AND UPLOAD")
 
 #Every 30mins
 #schedule.every(30).minutes.do(collectData)
 
 #every hour
-schedule.every(2).hours.do(collectData)
+#schedule.every(2).hours.do(collectData)
 
 #Every day 10:30 is like 6:30
-#schedule.every().day.at('10:30').do(collectData)
+schedule.every().day.at('10:30').do(collectData)
 
 while True:
     schedule.run_pending()
