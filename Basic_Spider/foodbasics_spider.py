@@ -3,9 +3,6 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 import os
 
-#TODO: The program throws an error at the end of the craw because next link is null
-#Added a check, stil doesn't work. Scrapy is asynchronous. Need to find a way to make it check next_link before
-
 
 def safe_float_cast(value):
     try:

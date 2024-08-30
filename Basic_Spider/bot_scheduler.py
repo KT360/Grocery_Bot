@@ -22,10 +22,9 @@ def collectData():
     parser_process = Process(target=run_data_parser)
 
     fb_process.start()
-    nf_process.start()
-
-    #Wait for these to finish first
     fb_process.join()
+
+    nf_process.start()
     nf_process.join()
 
     #Start and finish parsing data
