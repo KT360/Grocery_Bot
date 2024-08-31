@@ -49,7 +49,7 @@ def scrapProducts(product_list):
                     "name":product['name'], 
                     "price":float(product['prices']['price']['value']), 
                     "price_before":float(product['prices']['wasPrice']['value']) if product['prices']['wasPrice'] else None,  #Sometimes there is not price before
-                    "product_link":'https://www.nofrills.ca/'+product['link'], 
+                    "product_link":'https://www.realcanadiansuperstore.ca/'+product['link'], 
                     "product_image":product['imageAssets'][0]['mediumUrl']
                     }
             entry = json.dumps(data)+'\n'
