@@ -11,6 +11,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import 'dart:convert';
+import 'package:flutter/services.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -36,7 +39,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
+//NOTE: Would be good to create a single json file with all store data such as table, formatted name, text color, background color, Icon
 class MyAppState extends ChangeNotifier {
   //Products
   List<Map<dynamic,dynamic>> products = [];
@@ -47,37 +50,47 @@ class MyAppState extends ChangeNotifier {
 
   bool showLoading = false;
 
+  List<Map<String,dynamic>> allStores = [];
+
+  MyAppState(){
+    readJson();
+  }
+
   void setShowLoading(value){
     showLoading = value;
     notifyListeners();
   }
+  //get info on available stores, add selected property
+  Future<void> readJson() async {
+    final String response = await rootBundle.loadString('assets/stores.json');
+    final data = await json.decode(response);
 
-  /*
-  //Get all products
-  Future<void> getAllProducts() async {
-    products.clear();
-    try{
-      var result = await sqlConn.execute('SELECT * FROM foodbasics');
-      for(var element in result.rows){
-      Map data = element.assoc();
-      products.add(data);
-      }
-      notifyListeners();
-    }catch(e){
-      print(e);
+    //Add selected prperty
+    for(var store in data['stores']){
+      store['selected'] = false;
+      allStores.add(store);
     }
-  }*/
+
+    print("JSON successful");
+    print("SIZE ${allStores.length}");
+    notifyListeners();
+  }
+
+  void setSelected(index, isSelected){
+    allStores[index]['selected'] = isSelected;
+    notifyListeners();
+  }
+
 
   //Takes in a table name an returns the appropriate store name
-  String formatStoreName(tableName){
-    switch(tableName){
-      case 'foodbasics':
-        return 'FoodBasics';
-      case 'nofrills':
-        return 'No Frills 🍁';
-      default:
-      return 'No Name';
+  String getFormattedStoreName(tableName){
+    for(var value in allStores){
+      if(value['table'] == tableName){
+        return value['formatted'];
+      }
     }
+
+    return "No Name";
   }
 
   //Filter tables according to the last product searched
@@ -122,7 +135,7 @@ class MyAppState extends ChangeNotifier {
           'product_link':row[3],
           'product_image':row[4],
           'product_id':row[5],
-          'store': formatStoreName(row[6])
+          'store': getFormattedStoreName(row[6])
         };
       });
 
@@ -145,18 +158,40 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
-  //Search product in individual tables
-  Future<void> searchProduct(String prodname) async {
+  //Search product in all tables, no price 
+  Future<void> searchProduct(String prodname, List<String> allTables) async {
+
+    //Clear products
     products.clear();
 
+    var fullQuery = "";
+    List<String> queries = [];
     var trimmed = prodname.trim();
 
-    lastSearch = prodname;
+    //for each table given in the array, compose query where we select the rows where the product name is present and the price is either null or lower than specified
+    for(var store in allTables){
+      var query = "SELECT $store.*, '$store' AS type FROM $store WHERE POSITION(LOWER('$trimmed') IN LOWER($store.name))>0";
+      queries.add(query);
+    }
+
+    //Combine all the queries together, adding a 'UNION ALL' except at the end
+    for(var i=0; i<queries.length; i++){
+
+      if(i < queries.length - 1){
+        fullQuery = fullQuery + queries[i] + " UNION ALL ";
+      }else
+      {
+        fullQuery = fullQuery + queries[i];
+      }
+
+    }
 
     try{
-      //FOOD BASICS
-      var fbResult = await sqlConn.execute("SELECT * FROM foodbasics WHERE POSITION(LOWER('$trimmed') IN LOWER(name))>0");
-      var fbFormatted = fbResult.map((row) {
+
+      //Execute the query
+      var result = await sqlConn.execute(fullQuery);
+      //Populate products with the appropriate store names depending on type column (column #7)
+      var formattedMap = result.map((row){
         return {
           'name':row[0],
           'price':row[1],
@@ -164,37 +199,28 @@ class MyAppState extends ChangeNotifier {
           'product_link':row[3],
           'product_image':row[4],
           'product_id':row[5],
-          'store':'FoodBasics'
+          'store': getFormattedStoreName(row[6])
         };
       });
-      for (var element in fbFormatted){
+
+      //append all to products
+      for(var element in formattedMap){
         products.add(element);
       }
-
-      //NO FRILLS
-      var nfResult = await sqlConn.execute("SELECT * FROM nofrills WHERE POSITION(LOWER('$trimmed') IN LOWER(name))>0");
-      var nfFormatted = nfResult.map((row) {
-        return {
-          'name':row[0],
-          'price':row[1],
-          'price_before':row[2],
-          'product_link':row[3],
-          'product_image':row[4],
-          'product_id':row[5],
-          'store':'No Frills 🍁'
-        };
-      });
-      for (var element in nfFormatted){
-        products.add(element);
-      }
-
       showLoading = false;
+
+      lastSearch = prodname;
+
+      //Notify
       notifyListeners();
 
     }catch(e){
+
       print(e);
+      Fluttertoast.showToast(msg: 'Connection Error: $e');
       showLoading = false;
       notifyListeners();
+      
     }
   }
 
@@ -314,11 +340,6 @@ class GeneratorPage extends StatefulWidget {
 
 class _GeneratorPageState extends State<GeneratorPage> {
 
-  //List containing the stores/tables and their selected state
-  var storeSelection = [
-    {'table':'foodbasics', 'selected':true},
-    {'table':'nofrills', 'selected': false}
-  ];
   //bool fbSelected = true;
   //bool nfSelected = false;
 
@@ -331,6 +352,15 @@ class _GeneratorPageState extends State<GeneratorPage> {
     myController.dispose();
     super.dispose();
   }
+
+  List<String> getAllTables(stateStores){
+    List<String> tableList = [];
+    for (var store in stateStores){
+      tableList.add(store['table'] as String);
+    }
+    return tableList;
+  }
+  
 
   //Dialog box
   Future<void>_dialogBuilder(BuildContext context){
@@ -354,22 +384,20 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     
                     SizedBox(
                       width: 300,
-                      height: 100,
+                      height: 150,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Expanded(
                             child: ListView.builder(
-                              itemCount: storeSelection.length,
+                              itemCount: appState.allStores.length,
                               itemBuilder: (BuildContext context, int index){
                                 return CheckboxListTile(
-                                  value: storeSelection[index]['selected'] as bool, 
+                                  value: appState.allStores[index]['selected'] as bool, 
                                   onChanged: (bool? value){
-                                    setState((){
-                                      storeSelection[index]['selected'] = value!;
-                                    });
+                                    appState.setSelected(index,value);
                                   },
-                                  title: Text(storeSelection[index]['table'] as String),
+                                  title: Text(appState.allStores[index]['formatted'] as String),
                                 );
                               },
                             ) 
@@ -447,7 +475,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     var price = 0.00;
                     var count = 0;
 
-                    for (var store in storeSelection){
+                    for (var store in appState.allStores){
                       if(store['selected'] as bool == true){
                         tableList.add(store['table'] as String);
                         count++;
@@ -502,7 +530,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
                 //Return empy sizbox for margin from top
                 return SizedBox(height:80);
               }
-              return buildCard(productList[index - 1]); //Adjust index
+              return buildCard(productList[index - 1], appState.allStores); //Adjust index
             },
           )
         ),
@@ -520,9 +548,10 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     fillColor: Colors.white,
                     filled: true
                   ),
+                  //Perform three function, first collect all known tables, the set loading, then search product in tables
                   onSubmitted: (value) => {
                     appState.setShowLoading(true),
-                    appState.searchProduct(value)
+                    appState.searchProduct(value,getAllTables(appState.allStores))
                   },
                 ),
               ),
@@ -537,7 +566,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
               child: const Text('Filter')
             ),
         ),
-        if(appState.showLoading)
+        if(appState.showLoading)//Show loading animation
           Center(
             child:LoadingAnimationWidget.staggeredDotsWave(
               color: Color.fromARGB(255, 255, 255, 255),
@@ -550,18 +579,10 @@ class _GeneratorPageState extends State<GeneratorPage> {
   }
 }
 
-//Card Widget
-Card buildCard(Map<dynamic, dynamic>  product) {
-  var storeColors = {
-    'FoodBasics':{
-      'background': Colors.lightGreen,
-      'color': Colors.yellow
-    },
-    'No Frills':{
-      'background': Colors.yellow,
-      'color': Colors.black
-    }
-  };
+
+Card buildCard(Map<dynamic, dynamic>  product, List<Map<String,dynamic>> allStores) {
+
+  var storeList = allStores;
 
   var heading = r"$" + (product['price']?.toString() ?? 'Not Found');
   var subheading = r'was $'+ (product['price_before']?.toString() ?? 'Not Found');
@@ -570,10 +591,25 @@ Card buildCard(Map<dynamic, dynamic>  product) {
       product['product_image']);
   var supportingText =
       product['name'];
-  var store = product['store'];
+  var store = product['store']; //is the formatted version of the store name
   var productLink = product['product_link'];
 
-   return Card(
+  Color getARGB(numArray){
+    return Color.fromARGB(numArray[0], numArray[1], numArray[2], numArray[3]);
+  }
+
+  Map<String,dynamic>? getStoreByName(storeName){
+    for(var value in storeList){
+      if(value['formatted'] == storeName)
+      {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  return Card(
     elevation: 4.0,
     child: Column(
       children: [
@@ -591,9 +627,9 @@ Card buildCard(Map<dynamic, dynamic>  product) {
             ),
             Container(
               padding: EdgeInsets.all(10),
-              color: storeColors[store]?['background'],
+              color: getARGB(getStoreByName(store)?['background']),
               width: 100,
-              child: Text(store, style: TextStyle(color: storeColors[store]?['color'], fontWeight: FontWeight.bold),),
+              child: Text(store, style: TextStyle(color: getARGB(getStoreByName(store)?['textColor']), fontWeight: FontWeight.bold),),
             )
           ],
         ),
@@ -629,4 +665,6 @@ Card buildCard(Map<dynamic, dynamic>  product) {
         )
       ],
     ));
- }
+}
+
+//Card Widget

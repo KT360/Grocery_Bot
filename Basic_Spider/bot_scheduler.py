@@ -2,6 +2,7 @@ import schedule
 import time
 import foodbasics_spider as fb_spider
 import nofrills_spider as nf_spider
+import superstore_spider as sp_spider
 import data_parser
 
 from multiprocessing import Process
@@ -12,13 +13,19 @@ def run_fb_spider():
 def run_nf_spider():
     nf_spider.beginCrawl()
 
+def run_sp_spider():
+    sp_spider.beginCrawl()
+
 def run_data_parser():
     data_parser.parseScrapedData()
+
+
 
 def collectData():
     #Create separate processes, since scrapy reactors cannot be auto restarted in the same process
     fb_process = Process(target=run_fb_spider)
     nf_process = Process(target=run_nf_spider)
+    sp_process = Process(target=run_sp_spider)
     parser_process = Process(target=run_data_parser)
 
     print("STARTED FOODBASICS")
@@ -28,6 +35,10 @@ def collectData():
     print("STARTED NO FRILLS")
     nf_process.start()
     nf_process.join()
+
+    print("STARTED SUPERSTORE")
+    sp_process.start()
+    sp_process.join()
 
     print("STARTED UPLOAD")
     #Start and finish parsing data

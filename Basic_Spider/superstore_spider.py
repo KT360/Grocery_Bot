@@ -7,14 +7,14 @@ url = "https://api.pcexpress.ca/pcx-bff/api/v1/products/deals"
 
 # Initial payload for the first page
 payload = {
-    "banner": "nofrills",
-    "cartId": "2e0b186a-874d-4f19-91ce-fbaad4bef37f",
+    "banner": "superstore",
+    "cartId": "a673aaa6-5fc6-4217-9ead-86d6c35bb3b9",
     "lang": "en",
     "offerType": "ALL",
     "pagination": {"from": 0, "size": 48},
     "pcId": None,
     "pickupType": "STORE",
-    "storeId": "3152"
+    "storeId": "2827"
 }
 
 headers = {
@@ -23,16 +23,16 @@ headers = {
     "Accept-Language": "en",
     "Business-User-Agent": "PCXWEB",
     "Connection": "keep-alive",
-    "Content-Length": "201",
+    "Content-Length": "203",
     "Content-Type": "application/json",
     "Host": "api.pcexpress.ca",
-    "Origin": "https://www.nofrills.ca",
+    "Origin": "https://www.realcanadiansuperstore.ca",
     "Origin_Session_Header": "B",
-    "Referer": "https://www.nofrills.ca/",
+    "Referer": "https://www.realcanadiansuperstore.ca/",
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "cross-site",
-    "Site-Banner": "nofrills",
+    "Site-Banner": "superstore",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
     "is-helios-account": "false",
     "sec-ch-ua": "'Not)A;Brand';v='99', 'Google Chrome';v='127', 'Chromium';v='127'",
@@ -43,7 +43,7 @@ headers = {
 "name, price, price_before, product_link, product_id, product_image"
 
 def scrapProducts(product_list):
-    with open('nofrills_deals.jsonl', 'a') as f:
+    with open('superstore_deals.jsonl', 'a') as f:
         for product in product_list:
             data = {"product_id": int(product['articleNumber']), 
                     "name":product['name'], 
@@ -62,10 +62,10 @@ def beginCrawl():
     total_pages = 20
     page_size = 48
 
-    print('nf_spider STARTING REQUESTS')
+    print('SUPERSTORE_spider STARTING REQUESTS')
 
     #Truncate content in current file if present
-    open('nofrills_deals.jsonl', 'w').close()
+    open('superstore_deals.jsonl', 'w').close()
 
     #Send initial request to get first batch and total number of pages
     response = requests.post(url, json=payload, headers=headers)
@@ -91,6 +91,6 @@ def beginCrawl():
             product_list = response.json()['results']
             scrapProducts(product_list=product_list)
 
-        print('nf_spider REQUEST #'+str(i)+' FINISHED.')
+        print('SUPERSTORE_spider REQUEST #'+str(i)+' FINISHED.')
         #Send request every 30s
         time.sleep(30)
