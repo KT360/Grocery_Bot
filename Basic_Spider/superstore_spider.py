@@ -50,7 +50,7 @@ def scrapProducts(product_list):
                     "price":float(product['prices']['price']['value']), 
                     "price_before":float(product['prices']['wasPrice']['value']) if product['prices']['wasPrice'] else None,  #Sometimes there is not price before
                     "product_link":'https://www.realcanadiansuperstore.ca/'+product['link'], 
-                    "product_image":product['imageAssets'][0]['mediumUrl']
+                    "product_image":product['imageAssets'][0]['mediumUrl'] if product['imageAssets'] else ""
                     }
             entry = json.dumps(data)+'\n'
             f.write(entry)

@@ -36,9 +36,6 @@ host = os.getenv('PROXY_HOST')
 
 proxy = "http://{}:{}@{}:6060".format(username,password,host)
 
-#Delete current file contenets
-open('foodbasics_deals.jsonl', 'w').close()
-
 class FlyerSpider(scrapy.Spider):
     name = "flyers"
 
@@ -121,6 +118,9 @@ def beginCrawl():
         'RETRY_TIMES': 4,
         'DOWNLOAD_DELAY': 30
     })
+
+    #Delete current file contenets
+    open('foodbasics_deals.jsonl', 'w').close()
 
     process.crawl(FlyerSpider)
     process.start()
