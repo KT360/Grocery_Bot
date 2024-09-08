@@ -3,6 +3,7 @@ import time
 import foodbasics_spider as fb_spider
 import nofrills_spider as nf_spider
 import superstore_spider as sp_spider
+import walmart_spider as wm_spider
 import data_parser
 
 from multiprocessing import Process
@@ -16,6 +17,9 @@ def run_nf_spider():
 def run_sp_spider():
     sp_spider.beginCrawl()
 
+def run_wm_spider():
+    wm_spider.beginCrawl()
+
 def run_data_parser():
     data_parser.parseScrapedData()
 
@@ -26,6 +30,7 @@ def collectData():
     fb_process = Process(target=run_fb_spider)
     nf_process = Process(target=run_nf_spider)
     sp_process = Process(target=run_sp_spider)
+    wm_process = Process(target=run_wm_spider)
     parser_process = Process(target=run_data_parser)
 
     print("STARTED FOODBASICS")
@@ -39,6 +44,10 @@ def collectData():
     print("STARTED SUPERSTORE")
     sp_process.start()
     sp_process.join()
+
+    print("STARTED WALMART")
+    wm_process.start()
+    wm_process.join()
 
     print("STARTED UPLOAD")
     #Start and finish parsing data
