@@ -158,7 +158,8 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
-  //Search product in all tables, no price 
+  //Search product in all tables, no price
+  //IMPORTANT table must have the same col names, types but also SAME COLUMN ORDER!
   Future<void> searchProduct(String prodname, List<String> allTables) async {
 
     //Clear products
@@ -342,6 +343,8 @@ class _GeneratorPageState extends State<GeneratorPage> {
 
   //bool fbSelected = true;
   //bool nfSelected = false;
+
+  Color light = Colors.lightBlue;
 
   String? _priceFilter = r"Under 5$";
 

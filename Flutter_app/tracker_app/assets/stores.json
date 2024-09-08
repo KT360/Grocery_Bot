@@ -2,6 +2,7 @@
     "stores":[
         {"table":"foodbasics", "formatted":"FoodBasics", "textColor":[255,255,235,59], "background":[255,139,195,74], "icon":null },
         {"table":"nofrills", "formatted":"No Frills 🍁", "textColor":[255,0,0,0], "background":[255,255,235,59], "icon":null },
-        {"table":"superstore", "formatted":"SUPERSTORE", "textColor":[255,244,67,54], "background":[255,33,150,243], "icon":null }
+        {"table":"superstore", "formatted":"SUPERSTORE", "textColor":[255,244,67,54], "background":[255,33,150,243], "icon":null },
+        {"table":"walmart", "formatted":"Walmart ✲", "textColor":[255,255,235,59], "background":[255,3,169,244], "icon":null }
     ]
 }
