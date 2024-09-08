@@ -387,7 +387,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     
                     SizedBox(
                       width: 300,
-                      height: 150,
+                      height: 210,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
@@ -410,7 +410,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     ),
                     SizedBox(height: 30,),
                     SizedBox(
-                      height: 300,
+                      height: 260,
                       width: 300,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

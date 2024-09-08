@@ -66,17 +66,16 @@ class TestSpider(scrapy.Spider):
             self.total_pages = math.ceil(self.total_count/40)
 
         for product in product_list:
-            if not 'name' in product:
-                print(product)
-            yield {
-                #Key error at name for some reason
-                "name": product['name'],
-                "price": safe_float_cast(product['priceInfo']['linePrice'].replace('$','')),
-                "price_before": safe_float_cast(product['priceInfo']['wasPrice'].replace('$','')),
-                "product_id": safe_int_cast(product['id']),
-                "product_link": "https://www.walmart.ca/"+product['canonicalUrl'],
-                "product_image": safe_value_check(product['imageInfo']['thumbnailUrl'])
-            }
+            if 'name' in product:
+                yield {
+                    #Key error at name for some reason
+                    "name": product['name'],
+                    "price": safe_float_cast(product['priceInfo']['linePrice'].replace('$','')),
+                    "price_before": safe_float_cast(product['priceInfo']['wasPrice'].replace('$','')),
+                    "product_id": safe_int_cast(product['id']),
+                    "product_link": "https://www.walmart.ca/"+product['canonicalUrl'],
+                    "product_image": safe_value_check(product['imageInfo']['thumbnailUrl'])
+                }
         self.page_numb += 1
         if self.page_numb < self.total_pages:
             yield scrapy.Request(url="https://www.walmart.ca/en/shop/weekly-flyer-features/6000196190101?catId=10019&icid=cp_l1_page_grocery_lhn_weekly_flyer_58867_Y2KZC3NLT5&facet=fulfillment_method_in_store%3AIn+Store&page="+str(self.page_numb), meta={'proxy':proxy},callback=self.parse)

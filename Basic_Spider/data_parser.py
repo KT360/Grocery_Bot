@@ -15,12 +15,12 @@ def parseScrapedData():
     cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h', port=5432)
     cursor = cnx.cursor()
 
-    upload_schema = {
+    upload_schema = [
         {"file":"foodbasics_deals.jsonl", "table":"foodbasics"},
         {"file":"nofrills_deals.jsonl", "table":"nofrills"},
         {"file":"superstore_deals.jsonl", "table":"superstore"},
         {"file":"walmart_deals.jsonl", "table":"walmart"}
-    }
+    ]
 
     for schema in upload_schema:    
         #Add data
