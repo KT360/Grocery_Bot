@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 import json
 import os
 import psycopg2
@@ -18,12 +18,20 @@ def hello():
     return "Hello World!"
 
 #Executes the search query on the database returns json with 'items' property/array containing all records
-@app.route("/search/<query>")
+@app.route("/search", methods=['POST'])
 def getItems(query):
     #For now working on the assumption that the query is a select/union query
     #TODO: Find a way to sanitize and confirm query is a selection
     try:
-        cursor.execute(query)
+
+        #get query from headers
+        data = request.get_json()
+        sql_query = data.get('query')
+
+        if not sql_query:
+            return "No SQL query provided", 400
+
+        cursor.execute(sql_query)
         list = cursor.fetchall()
 
         formatted_list = []
@@ -40,10 +48,10 @@ def getItems(query):
 
         response = {"items":formatted_list}
 
-        return json.dumps(response)
+        return json.dumps(response), 200
 
-    except:
-        return "Query Error"
+    except Exception as e:
+        return str(e),200
 
 
 

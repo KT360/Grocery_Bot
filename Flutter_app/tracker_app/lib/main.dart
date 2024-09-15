@@ -60,6 +60,10 @@ class MyAppState extends ChangeNotifier {
     showLoading = value;
     notifyListeners();
   }
+
+
+
+
   //get info on available stores, add selected property
   Future<void> readJson() async {
     final String response = await rootBundle.loadString('assets/stores.json');
@@ -93,6 +97,62 @@ class MyAppState extends ChangeNotifier {
     return "No Name";
   }
 
+
+
+
+
+  Future<void> makeSearchRequest(String query, String prodname) async {
+    final url = Uri.parse("https://grocery-api-spje.onrender.com/search");
+
+    try{
+
+      final response = await http.post(
+        url,
+        headers:{'Content-Type':'application/json'},
+        body: jsonEncode({'query':query})
+      );
+
+      if(response.statusCode == 200){
+
+        final jsonData = jsonDecode(response.body);
+
+        var itemList = jsonData['items'];
+
+        var newList = itemList.map((item){
+          //Add the formatted store name
+          item['store'] = getFormattedStoreName(item['type']);
+
+          return item;
+        });
+
+        for(var element in newList){
+          products.add(element);
+        }
+
+      showLoading = false;
+      lastSearch = prodname;
+      //Notify
+      notifyListeners();
+
+      }else{
+        print('Error: ${response.statusCode} = ${response.body}');
+        Fluttertoast.showToast(msg: 'Connection Error: ${response.statusCode} = ${response.body}');
+        showLoading = false;
+        notifyListeners();
+      }
+    }catch(e){
+      print('Exception: $e');
+      Fluttertoast.showToast(msg: 'Connection Error: $e');
+      showLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+
+
+
+
   //Filter tables according to the last product searched
   //All store tables should have the same columns and data types
   Future<void> filteredSearch(String prodname, List<String>tables, double priceFilter) async {
@@ -121,42 +181,13 @@ class MyAppState extends ChangeNotifier {
       }
 
     }
-
-    try{
-
-      //Execute the query
-      var result = await sqlConn.execute(fullQuery);
-      //Populate products with the appropriate store names depending on type column (column #7)
-      var formattedMap = result.map((row){
-        return {
-          'name':row[0],
-          'price':row[1],
-          'price_before':row[2],
-          'product_link':row[3],
-          'product_image':row[4],
-          'product_id':row[5],
-          'store': getFormattedStoreName(row[6])
-        };
-      });
-
-      //append all to products
-      for(var element in formattedMap){
-        products.add(element);
-      }
-      showLoading = false;
-
-      //Notify
-      notifyListeners();
-
-    }catch(e){
-
-      print(e);
-      Fluttertoast.showToast(msg: 'Connection Error: $e');
-      showLoading = false;
-      notifyListeners();
-      
-    }
+    makeSearchRequest(fullQuery, prodname);
   }
+
+
+
+
+
 
   //Search product in all tables, no price
   //IMPORTANT table must have the same col names, types but also SAME COLUMN ORDER!
@@ -187,6 +218,8 @@ class MyAppState extends ChangeNotifier {
 
     }
 
+    makeSearchRequest(fullQuery, prodname);
+    /*
     try{
 
       //Execute the query
@@ -222,7 +255,7 @@ class MyAppState extends ChangeNotifier {
       showLoading = false;
       notifyListeners();
       
-    }
+    }*/
   }
 
 
