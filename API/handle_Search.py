@@ -19,7 +19,7 @@ def hello():
 
 #Executes the search query on the database returns json with 'items' property/array containing all records
 @app.route("/search", methods=['POST'])
-def getItems(query):
+def getItems():
     #For now working on the assumption that the query is a select/union query
     #TODO: Find a way to sanitize and confirm query is a selection
     try:

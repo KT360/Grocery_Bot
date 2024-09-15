@@ -272,44 +272,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   var selectedIndex = 0;
 
-  //NOTE: Emulator Android uses 10.0.2.2 as reference to current device
-  //Connect to mysql
-  Future<void> connectToSQL() async {
-
-    //Get current instance of state
-    final appState = Provider.of<MyAppState>(context, listen: false);
-
-    try{
-
-      final conn = await Connection.open(Endpoint(
-      host: 'dpg-cr5q4qbtq21c73b5uufg-a.oregon-postgres.render.com', 
-      port: 5432, 
-      username: 'bot_user', 
-      password: 'UXfpmS4AjGdBOi45zv7gaZJ4ntsdVsKZ',
-      database: 'deals_uh8h'
-      ));
-
-      //Set connection
-      appState.sqlConn = conn;
-
-      Fluttertoast.showToast(msg: 'Connection Successful');
-
-    }catch(e){
-
-      Fluttertoast.showToast(msg: 'Connection Error: $e');
-      print(e);
-    }
-
-  }
-
-
-  //Connect when main page is initialized
-  @override
-  void initState(){
-    super.initState();
-    connectToSQL();
-  }
-
   @override
   Widget build(BuildContext context) {
 
