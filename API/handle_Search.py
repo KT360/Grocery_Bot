@@ -13,6 +13,10 @@ hostname = os.environ.get('HOST_NAME')
 cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h', port=5432)
 cursor = cnx.cursor()
 
+@app.route("/")
+def hello():
+    return "Hello World!"
+
 #Executes the search query on the database returns json with 'items' property/array containing all records
 @app.route("/search/<query>")
 def getItems(query):
