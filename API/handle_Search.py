@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import json
 import os
 import psycopg2
+from psycopg2 import pool
 
 app = Flask(__name__)
 
@@ -9,9 +10,15 @@ user = os.environ.get('USER_NAME')
 password = os.environ.get('PASSWORD')
 hostname = os.environ.get('HOST_NAME')
 
-#Connect to database
-cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h_y8cg', port=5432)
-cursor = cnx.cursor()
+db_pool = pool.SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    user=user,
+    password=password,
+    host=hostname,
+    database='deals_uh8h_y8cg',
+    port=5432
+)
 
 @app.route("/")
 def hello():
@@ -31,6 +38,10 @@ def getItems():
         if not sql_query:
             return "No SQL query provided", 400
 
+        #Establish connection to database
+        cnx = db_pool.getconn()
+        cursor = cnx.cursor()
+
         cursor.execute(sql_query)
         list = cursor.fetchall()
 
@@ -46,13 +57,29 @@ def getItems():
                 'type':row[6]
             })
 
+        cnx.commit()
+
         response = {"items":formatted_list}
 
         return json.dumps(response), 200
 
     except Exception as e:
-        return str(e),200
+        if cnx:
+            cnx.rollback()
+        return str(e), 500
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if cnx:
+            db_pool.putconn(cnx) #Return connection to pool
 
+
+#Clean up
+@app.teardown_appcontext
+def close_pool(exception):
+    if db_pool:
+        db_pool.closeall()
 
 
 if __name__ == '__main__':
