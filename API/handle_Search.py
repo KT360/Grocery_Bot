@@ -13,19 +13,16 @@ hostname = os.environ.get('HOST_NAME')
 
 global db_pool
 
-db_pool = None  # Declare globally
-
-if db_pool is None:
-    db_pool = pool.SimpleConnectionPool(
-        minconn=1,
-        maxconn=10,
-        user=user,
-        password=password,
-        host=hostname,
-        database='deals_uh8h_y8cg',
-        port=5432
-    )
-    print("✅ Connection pool initialized")
+db_pool = pool.SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    user=user,
+    password=password,
+    host=hostname,
+    database='deals_uh8h_y8cg',
+    port=5432
+)
+print("✅ Connection pool initialized")
 
 
 @app.route("/")
@@ -45,10 +42,6 @@ def getItems():
 
         if not sql_query:
             return "No SQL query provided", 400
-
-        #Initialize first
-        cnx = None
-        cursor = None
 
         #Establish connection to database
         cnx = db_pool.getconn()
@@ -85,18 +78,3 @@ def getItems():
             cursor.close()
         if cnx:
             db_pool.putconn(cnx) #Return connection to pool
-
-
-@app.teardown_appcontext
-def close_pool(exception):
-    global db_pool
-    try:
-        if db_pool:
-            db_pool.closeall()
-            db_pool = None
-            print("🧹 Connection pool closed")
-    except Exception as e:
-        print(f"⚠️ Error during pool teardown: {e}")
-
-if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0',port=4000)
