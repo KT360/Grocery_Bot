@@ -5,20 +5,28 @@ import psycopg2
 from psycopg2 import pool
 
 app = Flask(__name__)
+db_pool = None  # Declare globally
 
 user = os.environ.get('USER_NAME')
 password = os.environ.get('PASSWORD')
 hostname = os.environ.get('HOST_NAME')
 
-db_pool = pool.SimpleConnectionPool(
-    minconn=1,
-    maxconn=10,
-    user=user,
-    password=password,
-    host=hostname,
-    database='deals_uh8h_y8cg',
-    port=5432
-)
+
+@app.before_first_request
+def initialize_connection_pool():
+    global db_pool
+    if db_pool is None:
+        db_pool = pool.SimpleConnectionPool(
+            minconn=1,
+            maxconn=10,
+            user=user,
+            password=password,
+            host=hostname,
+            database='deals_uh8h_y8cg',
+            port=5432
+        )
+        print("✅ Connection pool initialized")
+
 
 @app.route("/")
 def hello():
@@ -37,6 +45,10 @@ def getItems():
 
         if not sql_query:
             return "No SQL query provided", 400
+
+        #Initialize first
+        cnx = None
+        cursor = None
 
         #Establish connection to database
         cnx = db_pool.getconn()
