@@ -10,7 +10,7 @@ password = os.environ.get('PASSWORD')
 hostname = os.environ.get('HOST_NAME')
 
 #Connect to database
-cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h', port=5432)
+cnx = psycopg2.connect(user=user, password=password, host=hostname, database='deals_uh8h_y8cg', port=5432)
 cursor = cnx.cursor()
 
 @app.route("/")

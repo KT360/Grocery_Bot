@@ -403,49 +403,55 @@ class _GeneratorPageState extends State<GeneratorPage> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 30,),
+                    SizedBox(height: 20,),
                     SizedBox(
-                      height: 260,
+                      height: 145,
                       width: 300,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                              title: const Text(r'Under 5$'),
-                              leading: Radio<String>(
-                                value: r"Under 5$",
-                                groupValue: _priceFilter,
-                                onChanged: (String? value){
-                                  setState(() {
-                                    _priceFilter = value;
-                                  });
-                                },
-                              )
-                            ),
-                          ListTile(
-                              title: const Text(r'Under 10$'),
-                              leading: Radio<String>(
-                                value: r"Under 10$",
-                                groupValue: _priceFilter,
-                                onChanged: (String? value){
-                                  setState(() {
-                                    _priceFilter = value;
-                                  });
-                                },
-                              )
-                            ),
-                          ListTile(
-                              title: const Text(r'Under 15$'),
-                              leading: Radio<String>(
-                                value: r"Under 15$",
-                                groupValue: _priceFilter,
-                                onChanged: (String? value){
-                                  setState(() {
-                                    _priceFilter = value;
-                                  });
-                                },
-                              )
-                            ),
+                        children: <Widget>[
+                          Expanded(
+                            child: ListView(
+                              children: <Widget>[
+                                ListTile(
+                                    title: const Text(r'Under 5$'),
+                                    leading: Radio<String>(
+                                      value: r"Under 5$",
+                                      groupValue: _priceFilter,
+                                      onChanged: (String? value){
+                                        setState(() {
+                                          _priceFilter = value;
+                                        });
+                                      },
+                                    )
+                                  ),
+                                ListTile(
+                                    title: const Text(r'Under 10$'),
+                                    leading: Radio<String>(
+                                      value: r"Under 10$",
+                                      groupValue: _priceFilter,
+                                      onChanged: (String? value){
+                                        setState(() {
+                                          _priceFilter = value;
+                                        });
+                                      },
+                                    )
+                                  ),
+                                ListTile(
+                                    title: const Text(r'Under 15$'),
+                                    leading: Radio<String>(
+                                      value: r"Under 15$",
+                                      groupValue: _priceFilter,
+                                      onChanged: (String? value){
+                                        setState(() {
+                                          _priceFilter = value;
+                                        });
+                                      },
+                                    )
+                                  )
+                              ]
+                            )
+                          )
                         ],
                       ),
                     )
@@ -515,6 +521,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
     //Get updated instance of product list
     final productList = appState.products;
 
+    final screenHeight = MediaQuery.of(context).size.height;
     
     
     return Stack(
@@ -556,7 +563,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
         ),
         Positioned(
           right: 25,
-          top: 625, //Dynamic positioning
+          top: screenHeight*0.75, //Dynamic positioning
           child: ElevatedButton(
               onPressed: appState.lastSearch == "" ? null : (){
                 _dialogBuilder(context);
