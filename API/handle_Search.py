@@ -78,3 +78,6 @@ def getItems():
             cursor.close()
         if cnx:
             db_pool.putconn(cnx) #Return connection to pool
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=4000)
