@@ -87,12 +87,16 @@ def getItems():
             db_pool.putconn(cnx) #Return connection to pool
 
 
-#Clean up
 @app.teardown_appcontext
 def close_pool(exception):
-    if db_pool:
-        db_pool.closeall()
-
+    global db_pool
+    try:
+        if db_pool:
+            db_pool.closeall()
+            db_pool = None
+            print("🧹 Connection pool closed")
+    except Exception as e:
+        print(f"⚠️ Error during pool teardown: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0',port=4000)
