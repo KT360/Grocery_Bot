@@ -56,6 +56,10 @@ def collectData():
 
     print("FINISHED SCRAPING AND UPLOAD")
 
+#Run it once first
+print("INITIALIZATION RUN-------------------")
+collectData()
+
 #Every 30mins
 #schedule.every(30).minutes.do(collectData)
 
