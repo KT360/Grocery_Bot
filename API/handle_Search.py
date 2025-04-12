@@ -55,10 +55,10 @@ def getItems():
             formatted_list.append({
                 'name':row[0],
                 'price':row[1],
-                'price_before':row[2],
-                'product_link':row[3],
-                'product_image':row[4],
-                'product_id':row[5],
+                'product_id':row[2],
+                'price_before':row[3],
+                'product_link':row[4],
+                'product_image':row[5],
                 'type':row[6]
             })
 
