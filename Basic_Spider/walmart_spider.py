@@ -87,7 +87,7 @@ def beginCrawl():
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
         'FEED_FORMAT': 'jsonl',
         'FEED_URI': 'walmart_deals.jsonl',
-        'RETRY_HTTP_CODES': [500, 502, 503, 504, 522, 524, 408, 429, 403],
+        'RETRY_HTTP_CODES': [500, 502, 503, 504, 522, 524, 408, 429, 403,307],
         'RETRY_TIMES': 4,
         'DOWNLOAD_DELAY': 30
     })
