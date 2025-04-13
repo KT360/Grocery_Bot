@@ -14,6 +14,8 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -279,6 +281,8 @@ class _MyHomePageState extends State<MyHomePage> {
     switch(selectedIndex){
       case 0:
         page = GeneratorPage();
+      case 1:
+        page = ShoppingListPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -307,9 +311,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (value) {
-                    /*setState((){
+                    
+                    setState((){
                       selectedIndex = value;
-                    });*/ 
+                    });
+                  
                   },
                 ),
               ),
@@ -328,7 +334,164 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 
+//Page where shopping items are listed
+class ShoppingListPage extends StatefulWidget {
+  @override
+  State<ShoppingListPage> createState() => _ShoppingListPageState();
+}
 
+class _ShoppingListPageState extends State<ShoppingListPage> {
+
+
+  Map<String, dynamic>? currentList;
+  bool isLoading = true;
+
+  //Load List when page is initiated
+  @override
+  void initState() {
+    super.initState();
+    loadList();
+  }
+
+  Future<void> loadList() async {
+    final data = await loadFromLocalStorage();
+    setState(() {
+      currentList = data;
+      isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    if(isLoading)
+    {
+      return Container(
+        child: Center(child: CircularProgressIndicator(),),
+      );
+    }
+
+    if(currentList != null)
+    {
+      //For each store, build a list UI for it
+      return Container(
+        child: ListView.builder(
+          itemCount: currentList?['stores'].length,
+          itemBuilder: (context, index){
+            var storeItems = currentList?['stores'][index]['listItems'];
+            return BuildListForStore(storeItems);
+          }),
+      );
+    }else
+    {
+      return Container(child: Text("No List Items"),);
+    }
+  }
+}
+
+
+// Save to device
+Future<void> saveToLocalStorage(Map<String, dynamic> itemData) async {
+
+  //First Load current shoping list
+  Map<String, dynamic>? currentList = await loadFromLocalStorage();
+  
+  dynamic listSchema;
+
+  //If not currently existing, create schema
+  if(currentList == null)
+  {
+    listSchema = {"stores":[]};
+
+    //Get all the currently supported stores
+    final String response = await rootBundle.loadString('assets/stores.json');
+    final data = await json.decode(response);
+
+    for(var store in data['stores'])
+    {
+      //for each supported store, add it's name accompanied by an empty list that will contain that stores items
+      listSchema['stores']?.add({"store_name":store['formatted'], "listItems":[]});
+    }
+
+  }
+
+  //If we had to initialize a new schema, add the item to that
+  if(listSchema != null)
+  {
+    //add the item to the corresponding store
+    for(var store in listSchema['stores'])
+    {
+      if(store['store_name'] == itemData['store'])
+      {
+        store['listItems'].add(itemData);
+      }
+    }
+  }
+
+  //If data already exists, modify that
+  if(currentList != null)
+  {
+    //add the item to the corresponding store
+    for(var store in currentList['stores'])
+    {
+      if(store['store_name'] == itemData['store'])
+      {
+        store['listItems'].add(itemData);
+      }
+    }
+  }
+  
+  final prefs = await SharedPreferences.getInstance();
+  String encoded = jsonEncode(currentList ?? listSchema);
+  await prefs.setString('myShoppingList', encoded);
+  print("✅ Data saved!");
+}
+
+
+
+// Load from device
+Future<Map<String, dynamic>?> loadFromLocalStorage() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? jsonString = prefs.getString('myShoppingList');
+
+  if (jsonString != null) {
+    final decoded = jsonDecode(jsonString);
+    print("📦 Loaded from storage: $decoded");
+    return decoded;
+  }
+
+  return null;
+}
+
+//Build Shopping list UI for selected items
+Container BuildListForStore(List<dynamic> storeItems)
+{
+  return Container(
+    padding: EdgeInsets.all(16), // Optional padding around content
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Heading Title',
+        ),
+        SizedBox(height: 10), // spacing between heading and list
+        Expanded( // Makes ListView take up the remaining space
+          child: ListView.builder(
+            itemCount: storeItems.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(storeItems[index]['name']),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+//Page to search for deals
 class GeneratorPage extends StatefulWidget {
   @override
   State<GeneratorPage> createState() => _GeneratorPageState();
@@ -652,6 +815,11 @@ Card buildCard(Map<dynamic, dynamic>  product, List<Map<String,dynamic>> allStor
         ),
         ButtonBar(
           children: [
+            ElevatedButton(onPressed: () {
+              final storeItem = {"store": store, "name": product['name'], "price":product['price']};
+              saveToLocalStorage(storeItem);
+            }, child: const Text('Add')),
+            SizedBox(width: 80),
             TextButton(
               child: const Text('LEARN MORE'),
               onPressed: () async {
