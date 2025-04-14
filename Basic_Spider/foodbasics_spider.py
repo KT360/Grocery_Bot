@@ -81,7 +81,7 @@ class FlyerSpider(scrapy.Spider):
             product_image = ""
             temp = safe_value_check(product.css("div.pt__visual picture.defaultable-picture source::attr(srcset)").getall(), arr_index=0)
             if temp:
-                product_image = str(temp).split(' ')[1].replace("'","")
+                product_image = str(temp).split(' ')[1].replace("'","").replace(",","")
 
             yield {
                 "name": name,
